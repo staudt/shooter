@@ -13,6 +13,8 @@ window.onload = function() {
             game.load.image('ship', 'assets/sprites/ship.png');
         },
         create: function() {
+            game.world.setBounds(0, 0, 3000, 1000);
+            
             weapon = game.add.weapon(30, 'bullet');
             weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
             weapon.bulletSpeed = 600;
@@ -24,7 +26,7 @@ window.onload = function() {
             game.physics.arcade.enable(player);
             player.anchor.set(0.5);
             player.body.collideWorldBounds = true;
-            //player.body.maxVelocity = 200;
+            weapon.trackSprite(player, 0, 0, true);
 
             enemy = this.add.sprite(600, 400, 'ship');
             game.physics.arcade.enable(enemy);
@@ -33,7 +35,8 @@ window.onload = function() {
             //enemy.body.bounce.set(0);
             //enemy.body.collideWorldBounds = true;
 
-            weapon.trackSprite(player, 0, 0, true);
+            game.camera.follow(player, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+
             cursors = this.input.keyboard.createCursorKeys();
             buttons = {
                 up: this.input.keyboard.addKey(Phaser.KeyCode.W),
@@ -65,13 +68,9 @@ window.onload = function() {
                 weapon.fire();
             }
 
-            game.physics.arcade.overlap(weapon, enemy, function(weapon, enemy) {
-                weapon.kill();
-                enemy.kill();
-            }, null, this);
-            //game.world.wrap(player, 16);
         },
         render: function() {
+            game.debug.cameraInfo(game.camera, 32, 32);
         }
     });
 };
