@@ -7,7 +7,6 @@ window.onload = function() {
     var weapon;
     var cursors;
     var buttons;
-    var stick;
     var player_speed = 280;
 
     var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
@@ -21,6 +20,7 @@ window.onload = function() {
         },
         create: function() {
             //game.world.setBounds(0, 0, 3000, 1000);
+            game.stage.backgroundColor = 0x33aa33;
             map = game.add.tilemap('map', 64, 64);
             map.addTilesetImage('tiles');
             layer = map.createLayer(0);
