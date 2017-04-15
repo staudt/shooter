@@ -1,12 +1,13 @@
 window.onload = function() {
-
-    var sprite;
+//game.stage.backgroundColor = '#992d2d';
+    var player;
+    var enemy;
     var weapon;
     var cursors;
     var buttons;
-    var player_speed = 6;
+    var player_speed = 280;
 
-    var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'phaser-example', { 
+    var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
         preload: function() {
             game.load.image('bullet', 'assets/sprites/bullet.png');
             game.load.image('ship', 'assets/sprites/ship.png');
@@ -17,11 +18,20 @@ window.onload = function() {
             weapon.bulletSpeed = 600;
             weapon.fireRate = 100;
             weapon.bulletAngleVariance = 8;
-            player = this.add.sprite(400, 300, 'ship');
-            player.anchor.set(0.5);
-            game.physics.arcade.enable(player);
+            game.physics.arcade.enable(weapon);
 
-            player.body.maxVelocity.set(400);
+            player = this.add.sprite(400, 300, 'ship');
+            game.physics.arcade.enable(player);
+            player.anchor.set(0.5);
+            player.body.collideWorldBounds = true;
+            //player.body.maxVelocity = 200;
+
+            enemy = this.add.sprite(600, 400, 'ship');
+            game.physics.arcade.enable(enemy);
+            enemy.anchor.set(0.5);
+            enemy.body.immovable = true;
+            //enemy.body.bounce.set(0);
+            //enemy.body.collideWorldBounds = true;
 
             weapon.trackSprite(player, 0, 0, true);
             cursors = this.input.keyboard.createCursorKeys();
@@ -34,30 +44,32 @@ window.onload = function() {
         },
         update: function() {
             player.rotation = game.physics.arcade.angleToPointer(player);
-            if (buttons.up.isDown)
-            {
-                player.y -= player_speed;
+            game.physics.arcade.collide(player, enemy);
+
+            player.body.velocity.setTo(0, 0);
+            if (buttons.up.isDown) {
+                player.body.velocity.y = -player_speed;
             }
-            else if (buttons.down.isDown)
-            {
-                player.y += player_speed;
+            else if (buttons.down.isDown) {
+                player.body.velocity.y = player_speed;
             }
 
-            if (buttons.left.isDown)
-            {
-                player.x -= player_speed;
+            if (buttons.left.isDown) {
+                player.body.velocity.x = -player_speed;
             }
-            else if (buttons.right.isDown)
-            {
-                player.x += player_speed;
+            else if (buttons.right.isDown) {
+                player.body.velocity.x = player_speed;
             }
 
-            if (game.input.activePointer.isDown)
-            {
+            if (game.input.activePointer.isDown) {
                 weapon.fire();
             }
 
-            game.world.wrap(player, 16);
+            game.physics.arcade.overlap(weapon, enemy, function(weapon, enemy) {
+                weapon.kill();
+                enemy.kill();
+            }, null, this);
+            //game.world.wrap(player, 16);
         },
         render: function() {
         }
