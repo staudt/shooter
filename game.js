@@ -70,13 +70,11 @@ window.onload = function() {
             } else if (buttons.down.isDown) {
                 player.body.velocity.y = player.speed;
             }
-
             if (buttons.left.isDown) {
                 player.body.velocity.x = -player.speed;
             } else if (buttons.right.isDown) {
                 player.body.velocity.x = player.speed;
             }
-
             if (game.input.activePointer.isDown) {
                 player.weapon.fire();
             }
