@@ -1,6 +1,8 @@
 window.onload = function() {
 //game.stage.backgroundColor = '#992d2d';
     var player;
+    var map;
+    var layer;
     var enemy;
     var weapon;
     var cursors;
@@ -11,9 +13,17 @@ window.onload = function() {
         preload: function() {
             game.load.image('bullet', 'assets/sprites/bullet.png');
             game.load.image('ship', 'assets/sprites/ship.png');
+
+            game.load.tilemap('map', 'assets/catastrophi_level2.csv', null, Phaser.Tilemap.CSV);
+            game.load.image('tiles', 'assets/catastrophi_tiles_16.png');
         },
         create: function() {
-            game.world.setBounds(0, 0, 3000, 1000);
+            //game.world.setBounds(0, 0, 3000, 1000);
+            map = game.add.tilemap('map', 16, 16);
+            map.addTilesetImage('tiles');
+            layer = map.createLayer(0);
+            layer.resizeWorld();
+            map.setCollisionBetween(54, 83);
             
             weapon = game.add.weapon(30, 'bullet');
             weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
@@ -48,6 +58,8 @@ window.onload = function() {
         update: function() {
             player.rotation = game.physics.arcade.angleToPointer(player);
             game.physics.arcade.collide(player, enemy);
+            game.physics.arcade.collide(player, layer);
+            game.physics.arcade.collide(weapon.bullets, layer, function(bullet, wall) { bullet.kill(); });
 
             player.body.velocity.setTo(0, 0);
             if (buttons.up.isDown) {
