@@ -31,7 +31,7 @@ window.onload = function() {
             player.animations.add('walk_down', [8,9]);
             player.animations.add('walk_left', [2,3]);
             player.animations.add('walk_right', [4,5]);
-            player.speed = 200;
+            player.speed = 250;
             game.physics.arcade.enable(player);
             player.anchor.set(0.5);
             player.body.collideWorldBounds = true;
@@ -40,7 +40,7 @@ window.onload = function() {
             player.weapon.bulletSpeed = 600;
             player.weapon.fireRate = 100;
             player.weapon.bulletAngleVariance = 6;
-            player.weapon.trackSprite(player, 0, 0, true);
+            player.weapon.trackSprite(player);
 
             game.physics.arcade.enable(player.weapon);
             enemy = this.add.sprite(600, 400, 'enemy');
@@ -58,8 +58,8 @@ window.onload = function() {
             };
         },
         update: function() {
-            direction = Number(game.physics.arcade.angleToPointer(player));
-            
+            player.weapon.fireAngle = Phaser.Math.radToDeg(game.physics.arcade.angleToPointer(player));
+
             game.physics.arcade.collide(player, enemy);
             game.physics.arcade.collide(player, layer);
             game.physics.arcade.collide(player.weapon.bullets, layer, function(bullet, wall) { bullet.kill(); });
