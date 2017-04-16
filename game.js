@@ -325,7 +325,7 @@ window.onload = function() {
         logoText.stroke = '#000000';
         logoText.strokeThickness = 2;
         logoText.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5);
-        sound_intro.play();
+        //sound_intro.play();
     }
 
     function reset() {
