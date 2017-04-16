@@ -11,6 +11,7 @@ window.onload = function() {
     var scoreText;
     var gameOverText;
     var LevelText;
+    var monstersText;
 
     var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
         preload: function() {
@@ -20,6 +21,7 @@ window.onload = function() {
             game.load.spritesheet('player', 'assets/sprites/player.png', 42, 48);
             game.load.spritesheet('skel', 'assets/sprites/monster_skel.png', 42, 48);
             game.load.spritesheet('frank', 'assets/sprites/monster_frank.png', 39, 48);
+            game.load.spritesheet('bomb', 'assets/sprites/monster_bomb.png', 36, 48);
 
             game.load.tilemap('map', 'assets/mapa.csv', null, Phaser.Tilemap.CSV);
             game.load.image('tiles', 'assets/tiles.png');
@@ -40,14 +42,14 @@ window.onload = function() {
             monsters = game.add.group();
             
             player = this.add.sprite(600, 360, 'player');
-            player.animations.add('idle_up', [10]);
+            player.animations.add('idle_up', [7]);
             player.animations.add('idle_down', [0]);
-            player.animations.add('idle_left', [2]);
-            player.animations.add('idle_right', [4]);
-            player.animations.add('walk_up', [12,13]);
-            player.animations.add('walk_down', [8,9]);
-            player.animations.add('walk_left', [2,3]);
-            player.animations.add('walk_right', [4,5]);
+            player.animations.add('idle_left', [4]);
+            player.animations.add('idle_right', [2]);
+            player.animations.add('walk_up', [7,8]);
+            player.animations.add('walk_down', [9,10]);
+            player.animations.add('walk_left', [5,6]);
+            player.animations.add('walk_right', [2,3]);
             player.hp = 100;
             player.speed = 250;
             player.score = 0;
@@ -87,13 +89,18 @@ window.onload = function() {
             scoreText.setTextBounds(0, 0, 0, 0);
             scoreText.fixedToCamera = true;
 
+            monstersText = game.add.text(60, 80, "Monsters: 0", { font: "bold 24px Arial", fill: "#fff", boundsAlignV: "middle" });
+            monstersText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
+            monstersText.setTextBounds(0, 0, 0, 0);
+            monstersText.fixedToCamera = true;
+
             levelText = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "Level 1", { font: "bold 60px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
             levelText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
             levelText.setTextBounds(0, 0, 0, 0);
             levelText.fixedToCamera = true;
             levelText.visible = false;
-            nextLevel();
             player.bringToTop();
+            nextLevel();
         },
 
 
@@ -116,8 +123,13 @@ window.onload = function() {
                 game.physics.arcade.moveToXY(monster, game.rnd.integerInRange(0, game.world.width), game.rnd.integerInRange(0, game.world.height), monster.speed);
             });
             game.physics.arcade.collide(player, monsters, function(player, monster) {
-                game.camera.shake(0.005, 20);
-                player.hp -= 2;
+                if (monster.type == 'bomb') {
+                    player.hp -= 33;
+                    monster.hp = 0;
+                } else {
+                    player.hp -= 2;
+                    game.camera.shake(0.005, 20);
+                }
             });
             
             if (player.hp <= 0) {
@@ -144,7 +156,7 @@ window.onload = function() {
             if (game.input.activePointer.isDown) {
                 player.weapon.fire();
             }
-            //player.animations.play('walk_'+getDirection(player.weapon.fireAngle), 12, true);
+            player.animations.play((player.body.velocity.x != 0 || player.body.velocity.y != 0 ? 'walk_' : 'idle_') +getDirection(player.weapon.fireAngle), 8, true);
 
             monsters.forEach(function(monster) {
                 if (monster.hp <= 0) {
@@ -153,8 +165,11 @@ window.onload = function() {
                     remainingMonsters -= 1;
                     if (monster.type == 'frank') {
                         player.score += 20;
-                    } else {
+                    } else if (monster.type == 'bomb')  {
                         player.score += 30;
+                        game.camera.shake(0.08, 400);
+                    } else {
+                        player.score += 40;
                     }
                 }
                 // AI
@@ -173,10 +188,10 @@ window.onload = function() {
                         player.hp -= 20;
                     });
                 }
-                monster.animations.play('walk_'+getDirection(angle), 12, true);
+                monster.animations.play('walk_'+getDirection(angle), 5, true);
             })
             scoreText.setText('Score: ' + player.score);
-
+            monstersText.setText('Monsters: ' + remainingMonsters);
         },
         render: function() {
             //game.debug.cameraInfo(game.camera, 32, 32);
@@ -197,7 +212,8 @@ window.onload = function() {
     }
 
     function generate_monster() {
-        if (game.rnd.integerInRange(1, 3) < 3) {
+        roll = game.rnd.integerInRange(1,10);
+        if (roll < 5) {
             var monster = game.add.sprite(door.x, door.y, 'frank');
             monster.animations.add('walk_down', [1,2]);
             monster.animations.add('walk_up', [3,4]);
@@ -206,7 +222,7 @@ window.onload = function() {
             monster.hp = 15;
             monster.speed = 180;
             monster.type = 'frank';
-        } else {
+        } else if (roll >= 5 && roll <= 7) {
             var monster = game.add.sprite(door.x, door.y, 'skel');
             monster.animations.add('walk_down', [1,2]);
             monster.animations.add('walk_up', [4,5]);
@@ -222,6 +238,15 @@ window.onload = function() {
             monster.weapon.fireRate = 600;
             monster.weapon.bulletAngleVariance = 8;
             monster.weapon.trackSprite(monster);            
+        } else {
+            var monster = game.add.sprite(door.x, door.y, 'bomb');
+            monster.animations.add('walk_down', [1,2]);
+            monster.animations.add('walk_up', [1,2]);
+            monster.animations.add('walk_left', [7,9]);
+            monster.animations.add('walk_right', [6,8]);
+            monster.hp = 5;
+            monster.speed = 250;
+            monster.type = 'bomb';            
         }
         monster.reel = 0;
         game.physics.arcade.enable(monster);
