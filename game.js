@@ -7,6 +7,7 @@ window.onload = function() {
     var monsters;
     var gameLevel = 0;
     var remainingMonsters;
+    var healthbar;
 
     var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
         preload: function() {
@@ -52,8 +53,8 @@ window.onload = function() {
             player.body.collideWorldBounds = true;
             player.weapon = game.add.weapon(20, 'bullet');
             player.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-            player.weapon.bulletSpeed = 600;
-            player.weapon.fireRate = 100;
+            player.weapon.bulletSpeed = 500;
+            player.weapon.fireRate = 300;
             player.weapon.bulletAngleVariance = 6;
             player.weapon.trackSprite(player);
             
@@ -69,12 +70,16 @@ window.onload = function() {
             };
 
             nextLevel();
+
+            healthbar = game.add.graphics();
+            healthbar.fixedToCamera = true;
         },
 
 
 
 
         update: function() {
+            update_healthbar();
             player.weapon.fireAngle = Phaser.Math.radToDeg(game.physics.arcade.angleToPointer(player));
             player.bringToTop();
             game.physics.arcade.collide(player, layer);
@@ -171,12 +176,20 @@ window.onload = function() {
             monster.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
             monster.weapon.bulletSpeed = 350;
             monster.weapon.fireRate = 600;
-            monster.weapon.bulletAngleVariance = 10;
+            monster.weapon.bulletAngleVariance = 8;
             monster.weapon.trackSprite(monster);            
         }
         game.physics.arcade.enable(monster);
         monster.anchor.set(0.5);
         monster.body.collideWorldBounds = true;
         monsters.add(monster);
+    }
+
+    function update_healthbar() {
+        healthbar.clear()
+        healthbar.beginFill(0x000000, 0.2);
+        healthbar.drawRect(30, 30, 250, 30);
+        healthbar.beginFill((player.hp <= 20 ? 0xaa0000 : 0x505099), 1);
+        healthbar.drawRect(30, 30, (250*player.hp)/100, 30);
     }
 };
