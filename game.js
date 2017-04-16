@@ -140,10 +140,7 @@ window.onload = function() {
                 lockCounter = 100;
                 logoText.visible = true;
                 sound_intro.play();
-                monsters.forEach(function(m) {
-                    m.visible = false;
-                    m.destroy();
-                });
+                monsters.destroy(true, true);
                 remainingMonsters = 0;
                 return;
             }
