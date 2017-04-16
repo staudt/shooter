@@ -1,7 +1,7 @@
 window.onload = function() {
     
     WebFontConfig = {
-        active: function() { game.time.events.add(10, createText, this); },
+        active: function() { game.time.events.add(10, showLogoText, this); },
         google: {
             families: ['Fontdiner Swanky']
         }
@@ -17,8 +17,10 @@ window.onload = function() {
     var remainingMonsters;
     var healthbar;
     var scoreText;
-    var gameOverText;
     var LevelText;
+    var logoText;
+    var gameRunning;
+    var lockCounter;
     var door_locations = [ [270,158], [252,1025], [1875,986], [1683,197], [1080,765], [966,668], [1020,976] ];
 
     var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
@@ -36,8 +38,6 @@ window.onload = function() {
             game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
         },
 
-
-
         create: function() {
             map = game.add.tilemap('map', 64, 64);
             map.addTilesetImage('tiles');
@@ -45,36 +45,8 @@ window.onload = function() {
             layer.resizeWorld();
             map.setCollisionBetween(0, 11);
             map.setCollisionBetween(16, 24);
-
-            create_door();
+            
             monsters = game.add.group();
-            
-            player = this.add.sprite(600, 360, 'player');
-            player.animations.add('idle_up', [7]);
-            player.animations.add('idle_down', [0]);
-            player.animations.add('idle_left', [4]);
-            player.animations.add('idle_right', [2]);
-            player.animations.add('walk_up', [7,8]);
-            player.animations.add('walk_down', [9,10]);
-            player.animations.add('walk_left', [5,6]);
-            player.animations.add('walk_right', [2,3]);
-            player.hp = 100;
-            player.speed = 250;
-            player.score = 0;
-            player.firePower = 3;
-            game.physics.arcade.enable(player);
-            player.anchor.set(0.5);
-            player.body.collideWorldBounds = true;
-            player.weapon = game.add.weapon(20, 'bullet');
-            player.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-            player.weapon.bulletSpeed = 500;
-            player.weapon.fireRate = 300;
-            player.weapon.bulletAngleVariance = 6;
-            player.weapon.trackSprite(player);
-            
-            floor = new Phaser.Rectangle(0, 550, 800, 50);
-
-            game.camera.follow(player, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
 
             buttons = {
                 up: this.input.keyboard.addKey(Phaser.KeyCode.W),
@@ -86,29 +58,32 @@ window.onload = function() {
             healthbar = game.add.graphics();
             healthbar.fixedToCamera = true;
 
-            gameOverText = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "GAME OVER", { font: "bold 60px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
-            gameOverText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
-            gameOverText.setTextBounds(0, 0, 0, 0);
-            gameOverText.fixedToCamera = true;
-            gameOverText.visible = false;
             levelText = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "Level 1", { font: "bold 60px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
             levelText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
             levelText.setTextBounds(0, 0, 0, 0);
             levelText.fixedToCamera = true;
             levelText.visible = false;
-            scoreText = game.add.text(110, 120, "Score: 0\nNível: 0", { font: "bold 24px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
+            scoreText = game.add.text(110, 120, "", { font: "bold 24px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
             scoreText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
             scoreText.setTextBounds(0, 0, 0, 0);
             scoreText.fixedToCamera = true;
 
-            player.bringToTop();
-            nextLevel();
+            gameRunning = false;
+            lockCounter = 40;
         },
 
 
 
 
-        update: function() {        
+        update: function() {
+            if (!gameRunning) {
+                lockCounter -= 1;
+                if (game.input.activePointer.isDown && lockCounter <= 0) {
+                    gameRunning = true;
+                    reset();
+                }
+                return;
+            }
             update_healthbar();
             player.weapon.fireAngle = Phaser.Math.radToDeg(game.physics.arcade.angleToPointer(player));
 
@@ -136,7 +111,14 @@ window.onload = function() {
             
             if (player.hp <= 0) {
                 player.kill();
-                gameOverText.visible = true;
+                gameRunning = false;
+                lockCounter = 100;
+                logoText.visible = true;
+                monsters.forEach(function(m) {
+                    m.kill();
+                    monsters.remove(m);
+                });
+                remainingMonsters = 0;
                 return;
             }
             
@@ -159,7 +141,6 @@ window.onload = function() {
                 player.weapon.fire();
             }
             player.animations.play((player.body.velocity.x != 0 || player.body.velocity.y != 0 ? 'walk_' : 'idle_') +getDirection(player.weapon.fireAngle), 8, true);
-            //console.log(player.x + ' - ' + player.y); 
             monsters.forEach(function(monster) {
                 if (monster.hp <= 0) {
                     monster.kill();
@@ -193,6 +174,7 @@ window.onload = function() {
                 monster.animations.play('walk_'+getDirection(angle), 5, true);
             })
             scoreText.setText('Score: ' + player.score + '\nLevel: ' + gameLevel + '\nHorde: ' + remainingMonsters);
+            scoreText.bringToTop();
         },
         render: function() {
             //game.debug.cameraInfo(game.camera, 32, 32);
@@ -209,7 +191,7 @@ window.onload = function() {
 
     function nextLevel() {
         gameLevel += 1;
-        if (gameLevel > 2 && gameLevel % 2 == 0) {
+        if (gameLevel == 1 || gameLevel > 2 && gameLevel % 2 == 0) {
             create_door();
         }
         player.hp += 15;
@@ -298,23 +280,64 @@ window.onload = function() {
         return 'left';
     }
 
-    function createText() {
-        text = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "AH NÃO!\nMAIS MONSTROS?");
-        text.anchor.setTo(0.5);
-        text.font = 'Fontdiner Swanky';
-        text.fontSize = 60;
-        text.padding.set(10, 16);
-        text.fixedToCamera = true;
+    function showLogoText() {
+        logoText = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "AH NÃO!\nMAIS MONSTROS?");
+        logoText.anchor.setTo(0.5);
+        logoText.font = 'Fontdiner Swanky';
+        logoText.fontSize = 60;
+        logoText.padding.set(10, 16);
+        logoText.fixedToCamera = true;
 
-        grd = text.context.createLinearGradient(0, 0, 0, text.canvas.height);
+        grd = logoText.context.createLinearGradient(0, 0, 0, logoText.canvas.height);
         grd.addColorStop(0, '#004CB3');   
         grd.addColorStop(1, '#8ED6FF');
-        text.fill = grd;
+        logoText.fill = grd;
 
-        text.align = 'center';
-        text.stroke = '#000000';
-        text.strokeThickness = 2;
-        text.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5);
+        logoText.align = 'center';
+        logoText.stroke = '#000000';
+        logoText.strokeThickness = 2;
+        logoText.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5);
+    }
+
+    function reset() {
+        logoText.visible = false;
+        gameLevel = 0;
+        for (var i=0;i<doors.length;i++)
+            doors[i].destroy();
+        doors = []
+        monsters.forEach(function(monster) {
+            monsters.remove(monster);
+            monster.destroy();
+        });
+        player = game.add.sprite(600, 360, 'player');
+        player.animations.add('idle_up', [7]);
+        player.animations.add('idle_down', [0]);
+        player.animations.add('idle_left', [4]);
+        player.animations.add('idle_right', [2]);
+        player.animations.add('walk_up', [7,8]);
+        player.animations.add('walk_down', [9,10]);
+        player.animations.add('walk_left', [5,6]);
+        player.animations.add('walk_right', [2,3]);
+        game.physics.arcade.enable(player);
+        player.anchor.set(0.5);
+        player.body.collideWorldBounds = true;
+        player.weapon = game.add.weapon(20, 'bullet');
+        player.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+        player.weapon.trackSprite(player);
+
+        game.camera.follow(player, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+        
+        player.hp = 100;
+        player.speed = 250;
+        player.score = 0;
+        player.firePower = 3;
+        player.weapon.bulletSpeed = 500;
+        player.weapon.fireRate = 300;
+        player.weapon.bulletAngleVariance = 6;
+
+        remainingMonsters = 0;
+        player.bringToTop();
+        nextLevel();
     }
 
 };
