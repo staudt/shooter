@@ -47,10 +47,10 @@ window.onload = function() {
                 
             game.load.audio('bomb', 'assets/sfx/bomb.wav');
             game.load.audio('bullet', 'assets/sfx/bullet.wav');
-            game.load.audio('melee', 'assets/sfx/melee.wav');
-            game.load.audio('monster_bullet', 'assets/sfx/monster_bullet.wav');
-            game.load.audio('intro', 'assets/sfx/intro.wav');
-            game.load.audio('death', 'assets/sfx/death.wav');
+            //game.load.audio('melee', 'assets/sfx/melee.wav');
+            //game.load.audio('monster_bullet', 'assets/sfx/monster_bullet.wav');
+            //game.load.audio('intro', 'assets/sfx/intro.wav');
+            //game.load.audio('death', 'assets/sfx/death.wav');
         },
 
         create: function() {
@@ -63,12 +63,12 @@ window.onload = function() {
             
             monsters = game.add.group();
 
-            sound_intro = game.add.audio('intro');
+            //sound_intro = game.add.audio('intro');
             sound_bomb = game.add.audio('bomb');
             sound_bullet = game.add.audio('bullet');
-            sound_melee = game.add.audio('melee');
-            sound_monster_bullet = game.add.audio('monster_bullet');
-            sound_death = game.add.audio('death');
+            //sound_melee = game.add.audio('melee');
+            //sound_monster_bullet = game.add.audio('monster_bullet');
+            //sound_death = game.add.audio('death');
 
             buttons = {
                 up: this.input.keyboard.addKey(Phaser.KeyCode.W),
@@ -128,18 +128,18 @@ window.onload = function() {
                 } else {
                     player.hp -= 2;
                     game.camera.shake(0.005, 20);
-                    if (!sound_melee.isPlaying)
-                        sound_melee.play();
+                    //if (!sound_melee.isPlaying)
+                        //sound_melee.play();
                 }
             });
             
             if (player.hp <= 0) {
                 player.kill();
-                sound_death.play();
+                //sound_death.play();
                 gameRunning = false;
                 lockCounter = 100;
                 logoText.visible = true;
-                sound_intro.play();
+                //sound_intro.play();
                 monsters.destroy(true, true);
                 remainingMonsters = 0;
                 return;
@@ -167,7 +167,7 @@ window.onload = function() {
             monsters.forEach(function(monster) {
                 if (monster.hp <= 0) {
                     monster.kill();
-                    sound_death.play();
+                    //sound_death.play();
                     monsters.remove(monster);
                     remainingMonsters -= 1;
                     if (monster.type == 'frank') {
@@ -194,8 +194,8 @@ window.onload = function() {
                         bullet.kill();
                         game.camera.shake(0.01, 50);
                         player.hp -= 20;
-                        if (!sound_melee.isPlaying)
-                            sound_melee.play();
+                        //if (!sound_melee.isPlaying)
+                            //sound_melee.play();
                     });
                 }
                 monster.animations.play('walk_'+getDirection(angle), 5, true);
@@ -259,7 +259,7 @@ window.onload = function() {
             monster.weapon.fireRate = 600;
             monster.weapon.bulletAngleVariance = 8;
             monster.weapon.trackSprite(monster);       
-            monster.weapon.onFire.add(function(bullet, owner) { sound_monster_bullet.play() });     
+            monster.weapon.onFire.add(function(bullet, owner) { sound_bullet.play() });     
         } else {
             var monster = game.add.sprite(door.x, door.y, 'bomb');
             monster.animations.add('walk_down', [1,2]);
