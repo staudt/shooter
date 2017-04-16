@@ -63,7 +63,7 @@ window.onload = function() {
             levelText.setTextBounds(0, 0, 0, 0);
             levelText.fixedToCamera = true;
             levelText.visible = false;
-            scoreText = game.add.text(110, 120, "", { font: "bold 24px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
+            scoreText = game.add.text(116, 120, "", { font: "bold 24px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
             scoreText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
             scoreText.setTextBounds(0, 0, 0, 0);
             scoreText.fixedToCamera = true;
@@ -115,8 +115,9 @@ window.onload = function() {
                 lockCounter = 100;
                 logoText.visible = true;
                 monsters.forEach(function(m) {
+                    console.log(m);
+                    m.visible = false;
                     m.kill();
-                    monsters.remove(m);
                 });
                 remainingMonsters = 0;
                 return;
@@ -306,7 +307,6 @@ window.onload = function() {
             doors[i].destroy();
         doors = []
         monsters.forEach(function(monster) {
-            monsters.remove(monster);
             monster.destroy();
         });
         player = game.add.sprite(600, 360, 'player');
