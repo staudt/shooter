@@ -18,7 +18,7 @@ window.onload = function() {
             game.load.image('bullet_monster', 'assets/sprites/bullet_monster.png');
             game.load.image('door', 'assets/sprites/door.png');
             game.load.spritesheet('player', 'assets/sprites/player.png', 42, 48);
-            game.load.spritesheet('skel', 'assets/sprites/monster_skel.png', 39, 48);
+            game.load.spritesheet('skel', 'assets/sprites/monster_skel.png', 42, 48);
             game.load.spritesheet('frank', 'assets/sprites/monster_frank.png', 39, 48);
 
             game.load.tilemap('map', 'assets/mapa.csv', null, Phaser.Tilemap.CSV);
@@ -144,6 +144,7 @@ window.onload = function() {
             if (game.input.activePointer.isDown) {
                 player.weapon.fire();
             }
+            //player.animations.play('walk_'+getDirection(player.weapon.fireAngle), 12, true);
 
             monsters.forEach(function(monster) {
                 if (monster.hp <= 0) {
@@ -158,7 +159,6 @@ window.onload = function() {
                 }
                 // AI
                 angle = Phaser.Math.radToDeg(game.physics.arcade.angleBetween(monster, player));
-                //console.log(getDirection(angle));
                 if (monster.reel<=0) {
                     game.physics.arcade.moveToObject(monster, player, monster.speed);
                 } else {
@@ -173,6 +173,7 @@ window.onload = function() {
                         player.hp -= 20;
                     });
                 }
+                monster.animations.play('walk_'+getDirection(angle), 12, true);
             })
             scoreText.setText('Score: ' + player.score);
 
@@ -198,11 +199,19 @@ window.onload = function() {
     function generate_monster() {
         if (game.rnd.integerInRange(1, 3) < 3) {
             var monster = game.add.sprite(door.x, door.y, 'frank');
+            monster.animations.add('walk_down', [1,2]);
+            monster.animations.add('walk_up', [3,4]);
+            monster.animations.add('walk_left', [7,8]);
+            monster.animations.add('walk_right', [5,6]);
             monster.hp = 15;
             monster.speed = 180;
             monster.type = 'frank';
         } else {
             var monster = game.add.sprite(door.x, door.y, 'skel');
+            monster.animations.add('walk_down', [1,2]);
+            monster.animations.add('walk_up', [4,5]);
+            monster.animations.add('walk_left', [8,9]);
+            monster.animations.add('walk_right', [6,7]);
             monster.hp = 36;
             monster.speed = 70;
             monster.type = 'skel';
@@ -241,16 +250,15 @@ window.onload = function() {
     }
 
     function getDirection(vangle) {
-        //console.log(angle);
-        var angle = parseInt();
-        if (angle < 45 || angle >- 45) {
+        angle = parseInt(vangle);
+        if (angle < 45 && angle >- 45) {
             return 'right';
-        } else if (angle < -45 || angle > -135) {
+        } else if (angle < -45 && angle > -135) {
+            return 'up';
+        } else if (angle > -135 && angle < 135) {
             return 'down';
-        } else if (angle > -135 || angle < 135) {
-            return 'left';
         }
-        return 'up';
+        return 'left';
     }
 
 };
