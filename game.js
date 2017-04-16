@@ -1,7 +1,7 @@
 window.onload = function() {
     
     WebFontConfig = {
-        active: function() { game.time.events.add(10, showLogoText, this); },
+        active: function() { game.time.events.add(500, showLogoText, this); },
         google: {
             families: ['Fontdiner Swanky']
         }
