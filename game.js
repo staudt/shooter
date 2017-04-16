@@ -98,6 +98,7 @@ window.onload = function() {
 
 
         update: function() {
+            game.world.sendToBack(map);
             if (!gameRunning) {
                 lockCounter -= 1;
                 if (game.input.activePointer.isDown && lockCounter <= 0) {
