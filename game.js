@@ -1,7 +1,7 @@
 window.onload = function() {
     
     WebFontConfig = {
-        active: function() { game.time.events.add(500, showLogoText, this); },
+        active: function() { game.time.events.add(1000, showLogoText, this); },
         google: {
             families: ['Fontdiner Swanky']
         }
@@ -327,6 +327,7 @@ window.onload = function() {
         logoText.stroke = '#000000';
         logoText.strokeThickness = 2;
         logoText.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5);
+        logoText.bringToTop();
         //sound_intro.play();
     }
 
