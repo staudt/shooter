@@ -8,6 +8,9 @@ window.onload = function() {
     var gameLevel = 0;
     var remainingMonsters;
     var healthbar;
+    var scoreText;
+    var gameOverText;
+    var LevelText;
 
     var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
         preload: function() {
@@ -69,19 +72,36 @@ window.onload = function() {
                 right: this.input.keyboard.addKey(Phaser.KeyCode.D)
             };
 
-            nextLevel();
-
             healthbar = game.add.graphics();
             healthbar.fixedToCamera = true;
+
+            gameOverText = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "GAME OVER", { font: "bold 60px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
+            gameOverText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
+            gameOverText.setTextBounds(0, 0, 0, 0);
+            gameOverText.fixedToCamera = true;
+            gameOverText.visible = false;
+
+            scoreText = game.add.text(game.camera.x + (game.width/2), 40, "Score: 0", { font: "bold 24px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
+            scoreText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
+            scoreText.setTextBounds(0, 0, 0, 0);
+            scoreText.fixedToCamera = true;
+
+            levelText = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "Level 1", { font: "bold 60px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
+            levelText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
+            levelText.setTextBounds(0, 0, 0, 0);
+            levelText.fixedToCamera = true;
+            levelText.visible = false;
+            nextLevel();
+            player.bringToTop();
         },
 
 
 
 
-        update: function() {
+        update: function() {        
             update_healthbar();
             player.weapon.fireAngle = Phaser.Math.radToDeg(game.physics.arcade.angleToPointer(player));
-            player.bringToTop();
+
             game.physics.arcade.collide(player, layer);
             game.physics.arcade.collide(monsters, monsters);
             game.physics.arcade.collide(player.weapon.bullets, layer, function(bullet, wall) { bullet.kill(); });
@@ -98,6 +118,7 @@ window.onload = function() {
             
             if (player.hp <= 0) {
                 player.kill();
+                gameOverText.visible = true;
                 return;
             }
             
@@ -132,11 +153,13 @@ window.onload = function() {
                     }
                 }
                 // AI
+                angle = Phaser.Math.radToDeg(game.physics.arcade.angleBetween(monster, player));
+                //console.log(getDirection(angle));
                 if (monster.type == 'frank') {
                     game.physics.arcade.moveToObject(monster, player, 180);
                 } else {
                     game.physics.arcade.moveToObject(monster, player, 70);
-                    monster.weapon.fireAngle = Phaser.Math.radToDeg(game.physics.arcade.angleBetween(monster, player));
+                    monster.weapon.fireAngle = angle;
                     monster.weapon.fire();
                     game.physics.arcade.collide(player, monster.weapon.bullets, function(player, bullet) {
                         bullet.kill();
@@ -145,6 +168,7 @@ window.onload = function() {
                     });
                 }
             })
+            scoreText.setText('Score: ' + player.score);
 
         },
         render: function() {
@@ -155,7 +179,7 @@ window.onload = function() {
 
     function nextLevel() {
         gameLevel += 1;
-        console.log(gameLevel);
+        showLevelText();
         remainingMonsters = gameLevel*3;            
         for (var i=0;i<remainingMonsters; i++) {
             game.time.events.add(Phaser.Timer.SECOND * (i+1)*game.rnd.integerInRange(1, 2)+1, generate_monster, game);
@@ -188,8 +212,33 @@ window.onload = function() {
     function update_healthbar() {
         healthbar.clear()
         healthbar.beginFill(0x000000, 0.2);
-        healthbar.drawRect(30, 30, 250, 30);
+        healthbar.drawRect(60, 30, 250, 30);
         healthbar.beginFill((player.hp <= 20 ? 0xaa0000 : 0x505099), 1);
-        healthbar.drawRect(30, 30, (250*player.hp)/100, 30);
+        healthbar.drawRect(60, 30, player.hp>0 ? (250*player.hp)/100 : 0, 30);
     }
+
+    function showLevelText() {
+        levelText.setText('Level ' + gameLevel);
+        levelText.visible = true;
+        game.time.events.add(Phaser.Timer.SECOND * 2, hideLevelText, game);
+        levelText.bringToTop();
+    }
+
+    function hideLevelText() {
+        levelText.visible = false;
+    }
+
+    function getDirection(vangle) {
+        //console.log(angle);
+        var angle = parseInt();
+        if (angle < 45 || angle >- 45) {
+            return 'right';
+        } else if (angle < -45 || angle > -135) {
+            return 'down';
+        } else if (angle > -135 || angle < 135) {
+            return 'left';
+        }
+        return 'up';
+    }
+
 };
