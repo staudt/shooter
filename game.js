@@ -15,6 +15,7 @@ window.onload = function() {
     var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
         preload: function() {
             game.load.image('bullet', 'assets/sprites/bullet.png');
+            game.load.image('bullet_monster', 'assets/sprites/bullet_monster.png');
             game.load.image('door', 'assets/sprites/door.png');
             game.load.spritesheet('player', 'assets/sprites/player.png', 42, 48);
             game.load.spritesheet('skel', 'assets/sprites/monster_skel.png', 39, 48);
@@ -110,7 +111,10 @@ window.onload = function() {
                 monster.hp -= player.firePower;
                 player.score += 10;
             });
-            game.physics.arcade.collide(monsters, layer);
+            game.physics.arcade.collide(monsters, layer, function(monster, layer) {
+                monster.reel = 30;
+                game.physics.arcade.moveToXY(monster, game.rnd.integerInRange(0, game.world.width), game.rnd.integerInRange(0, game.world.height), monster.speed);
+            });
             game.physics.arcade.collide(player, monsters, function(player, monster) {
                 game.camera.shake(0.005, 20);
                 player.hp -= 2;
@@ -155,10 +159,12 @@ window.onload = function() {
                 // AI
                 angle = Phaser.Math.radToDeg(game.physics.arcade.angleBetween(monster, player));
                 //console.log(getDirection(angle));
-                if (monster.type == 'frank') {
-                    game.physics.arcade.moveToObject(monster, player, 180);
+                if (monster.reel<=0) {
+                    game.physics.arcade.moveToObject(monster, player, monster.speed);
                 } else {
-                    game.physics.arcade.moveToObject(monster, player, 70);
+                    monster.reel -= 1;
+                }
+                if (monster.type == 'skel') {
                     monster.weapon.fireAngle = angle;
                     monster.weapon.fire();
                     game.physics.arcade.collide(player, monster.weapon.bullets, function(player, bullet) {
@@ -179,6 +185,9 @@ window.onload = function() {
 
     function nextLevel() {
         gameLevel += 1;
+        player.hp += 15;
+        if (player.hp > 100)
+            player.hp = 100;
         showLevelText();
         remainingMonsters = gameLevel*3;            
         for (var i=0;i<remainingMonsters; i++) {
@@ -190,19 +199,22 @@ window.onload = function() {
         if (game.rnd.integerInRange(1, 3) < 3) {
             var monster = game.add.sprite(door.x, door.y, 'frank');
             monster.hp = 15;
+            monster.speed = 180;
             monster.type = 'frank';
         } else {
             var monster = game.add.sprite(door.x, door.y, 'skel');
             monster.hp = 36;
+            monster.speed = 70;
             monster.type = 'skel';
 
-            monster.weapon = game.add.weapon(2, 'bullet');
+            monster.weapon = game.add.weapon(2, 'bullet_monster');
             monster.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
             monster.weapon.bulletSpeed = 350;
             monster.weapon.fireRate = 600;
             monster.weapon.bulletAngleVariance = 8;
             monster.weapon.trackSprite(monster);            
         }
+        monster.reel = 0;
         game.physics.arcade.enable(monster);
         monster.anchor.set(0.5);
         monster.body.collideWorldBounds = true;
