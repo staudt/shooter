@@ -21,6 +21,12 @@ window.onload = function() {
     var logoText;
     var gameRunning;
     var lockCounter;
+
+    var sound_bomb;
+    var sound_melee;
+    var sound_bullet;
+    var sound_monster_bullet;
+    
     var door_locations = [ [270,158], [252,1025], [1875,986], [1683,197], [1080,765], [966,668], [1020,976] ];
 
     var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
@@ -36,6 +42,11 @@ window.onload = function() {
             game.load.tilemap('map', 'assets/map1.csv', null, Phaser.Tilemap.CSV);
             game.load.image('tiles', 'assets/tiles.png');
             game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
+                
+            game.load.audio('bomb', 'assets/sfx/bomb.wav');
+            game.load.audio('bullet', 'assets/sfx/bullet.wav');
+            game.load.audio('melee', 'assets/sfx/melee.wav');
+            game.load.audio('monster_bullet', 'assets/sfx/monster_bullet.wav');
         },
 
         create: function() {
@@ -47,6 +58,11 @@ window.onload = function() {
             map.setCollisionBetween(16, 24);
             
             monsters = game.add.group();
+
+            sound_bomb = game.add.audio('bomb');
+            sound_bullet = game.add.audio('bullet');
+            sound_melee = game.add.audio('melee');
+            sound_monster_bullet = game.add.audio('monster_bullet');
 
             buttons = {
                 up: this.input.keyboard.addKey(Phaser.KeyCode.W),
@@ -106,6 +122,8 @@ window.onload = function() {
                 } else {
                     player.hp -= 2;
                     game.camera.shake(0.005, 20);
+                    if (!sound_melee.isPlaying)
+                        sound_melee.play();
                 }
             });
             
@@ -115,9 +133,8 @@ window.onload = function() {
                 lockCounter = 100;
                 logoText.visible = true;
                 monsters.forEach(function(m) {
-                    console.log(m);
                     m.visible = false;
-                    m.kill();
+                    m.destroy();
                 });
                 remainingMonsters = 0;
                 return;
@@ -152,6 +169,7 @@ window.onload = function() {
                     } else if (monster.type == 'bomb')  {
                         player.score += 30;
                         game.camera.shake(0.05, 400);
+                        sound_bomb.play();
                     } else {
                         player.score += 40;
                     }
@@ -170,6 +188,8 @@ window.onload = function() {
                         bullet.kill();
                         game.camera.shake(0.01, 50);
                         player.hp -= 20;
+                        if (!sound_melee.isPlaying)
+                            sound_melee.play();
                     });
                 }
                 monster.animations.play('walk_'+getDirection(angle), 5, true);
@@ -232,7 +252,8 @@ window.onload = function() {
             monster.weapon.bulletSpeed = 350;
             monster.weapon.fireRate = 600;
             monster.weapon.bulletAngleVariance = 8;
-            monster.weapon.trackSprite(monster);            
+            monster.weapon.trackSprite(monster);       
+            monster.weapon.onFire.add(function(bullet, owner) { sound_monster_bullet.play() });     
         } else {
             var monster = game.add.sprite(door.x, door.y, 'bomb');
             monster.animations.add('walk_down', [1,2]);
@@ -324,6 +345,7 @@ window.onload = function() {
         player.weapon = game.add.weapon(20, 'bullet');
         player.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
         player.weapon.trackSprite(player);
+        player.weapon.onFire.add(function(bullet, owner) { sound_bullet.play() });     
 
         game.camera.follow(player, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
         
