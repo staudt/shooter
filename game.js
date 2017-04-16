@@ -23,7 +23,6 @@ window.onload = function() {
 
 
         create: function() {
-            
             map = game.add.tilemap('map', 64, 64);
             map.addTilesetImage('tiles');
             layer = map.createLayer(0);
@@ -35,7 +34,7 @@ window.onload = function() {
             door.anchor.set(0.5);
             monsters = game.add.group();
             
-            player = this.add.sprite(400, 300, 'player');
+            player = this.add.sprite(600, 360, 'player');
             player.animations.add('idle_up', [10]);
             player.animations.add('idle_down', [0]);
             player.animations.add('idle_left', [2]);
@@ -44,18 +43,22 @@ window.onload = function() {
             player.animations.add('walk_down', [8,9]);
             player.animations.add('walk_left', [2,3]);
             player.animations.add('walk_right', [4,5]);
+            player.hp = 100;
             player.speed = 250;
+            player.score = 0;
             player.firePower = 3;
             game.physics.arcade.enable(player);
             player.anchor.set(0.5);
             player.body.collideWorldBounds = true;
-            player.weapon = game.add.weapon(30, 'bullet');
+            player.weapon = game.add.weapon(20, 'bullet');
             player.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
             player.weapon.bulletSpeed = 600;
             player.weapon.fireRate = 100;
             player.weapon.bulletAngleVariance = 6;
             player.weapon.trackSprite(player);
             
+            floor = new Phaser.Rectangle(0, 550, 800, 50);
+
             game.camera.follow(player, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
 
             buttons = {
@@ -72,23 +75,30 @@ window.onload = function() {
 
 
         update: function() {
-            if (remainingMonsters <=0) {
-                nextLevel();
-            };
-
             player.weapon.fireAngle = Phaser.Math.radToDeg(game.physics.arcade.angleToPointer(player));
             player.bringToTop();
             game.physics.arcade.collide(player, layer);
-            game.physics.arcade.collide(player, monsters, function(player, monster) {
-                player.body.velocity
-            });
-
-            //game.physics.arcade.collide(monsters, monsters);
+            game.physics.arcade.collide(monsters, monsters);
             game.physics.arcade.collide(player.weapon.bullets, layer, function(bullet, wall) { bullet.kill(); });
             game.physics.arcade.collide(player.weapon.bullets, monsters, function(bullet, monster) {
                 bullet.kill();
                 monster.hp -= player.firePower;
+                player.score += 10;
             });
+            game.physics.arcade.collide(monsters, layer);
+            game.physics.arcade.collide(player, monsters, function(player, monster) {
+                game.camera.shake(0.005, 20);
+                player.hp -= 2;
+            });
+            
+            if (player.hp <= 0) {
+                player.kill();
+                return;
+            }
+            
+            if (remainingMonsters <=0) {
+                nextLevel();
+            };
 
             player.body.velocity.setTo(0, 0);
             if (buttons.up.isDown) {
@@ -110,11 +120,25 @@ window.onload = function() {
                     monster.kill();
                     monsters.remove(monster);
                     remainingMonsters -= 1;
+                    if (monster.type == 'frank') {
+                        player.score += 20;
+                    } else {
+                        player.score += 30;
+                    }
                 }
-                game.physics.arcade.collide(monster, layer);
-                game.physics.arcade.collide(monster, player);
                 // AI
-                game.physics.arcade.moveToObject(monster, player, 180);
+                if (monster.type == 'frank') {
+                    game.physics.arcade.moveToObject(monster, player, 180);
+                } else {
+                    game.physics.arcade.moveToObject(monster, player, 70);
+                    monster.weapon.fireAngle = Phaser.Math.radToDeg(game.physics.arcade.angleBetween(monster, player));
+                    monster.weapon.fire();
+                    game.physics.arcade.collide(player, monster.weapon.bullets, function(player, bullet) {
+                        bullet.kill();
+                        game.camera.shake(0.01, 50);
+                        player.hp -= 20;
+                    });
+                }
             })
 
         },
@@ -134,11 +158,25 @@ window.onload = function() {
     }
 
     function generate_monster() {
-        var monster = game.add.sprite(door.x, door.y, 'frank');
+        if (game.rnd.integerInRange(1, 3) < 3) {
+            var monster = game.add.sprite(door.x, door.y, 'frank');
+            monster.hp = 15;
+            monster.type = 'frank';
+        } else {
+            var monster = game.add.sprite(door.x, door.y, 'skel');
+            monster.hp = 36;
+            monster.type = 'skel';
+
+            monster.weapon = game.add.weapon(2, 'bullet');
+            monster.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+            monster.weapon.bulletSpeed = 350;
+            monster.weapon.fireRate = 600;
+            monster.weapon.bulletAngleVariance = 10;
+            monster.weapon.trackSprite(monster);            
+        }
         game.physics.arcade.enable(monster);
         monster.anchor.set(0.5);
         monster.body.collideWorldBounds = true;
-        monster.hp = 10;
         monsters.add(monster);
     }
 };
