@@ -22,6 +22,8 @@ window.onload = function() {
     var gameRunning;
     var lockCounter;
 
+    var sound_intro;
+    var sound_death;
     var sound_bomb;
     var sound_melee;
     var sound_bullet;
@@ -47,6 +49,8 @@ window.onload = function() {
             game.load.audio('bullet', 'assets/sfx/bullet.wav');
             game.load.audio('melee', 'assets/sfx/melee.wav');
             game.load.audio('monster_bullet', 'assets/sfx/monster_bullet.wav');
+            game.load.audio('intro', 'assets/sfx/intro.wav');
+            game.load.audio('death', 'assets/sfx/death.wav');
         },
 
         create: function() {
@@ -59,10 +63,12 @@ window.onload = function() {
             
             monsters = game.add.group();
 
+            sound_intro = game.add.audio('intro');
             sound_bomb = game.add.audio('bomb');
             sound_bullet = game.add.audio('bullet');
             sound_melee = game.add.audio('melee');
             sound_monster_bullet = game.add.audio('monster_bullet');
+            sound_death = game.add.audio('death');
 
             buttons = {
                 up: this.input.keyboard.addKey(Phaser.KeyCode.W),
@@ -129,9 +135,11 @@ window.onload = function() {
             
             if (player.hp <= 0) {
                 player.kill();
+                sound_death.play();
                 gameRunning = false;
                 lockCounter = 100;
                 logoText.visible = true;
+                sound_intro.play();
                 monsters.forEach(function(m) {
                     m.visible = false;
                     m.destroy();
@@ -162,6 +170,7 @@ window.onload = function() {
             monsters.forEach(function(monster) {
                 if (monster.hp <= 0) {
                     monster.kill();
+                    sound_death.play();
                     monsters.remove(monster);
                     remainingMonsters -= 1;
                     if (monster.type == 'frank') {
@@ -319,6 +328,7 @@ window.onload = function() {
         logoText.stroke = '#000000';
         logoText.strokeThickness = 2;
         logoText.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5);
+        sound_intro.play();
     }
 
     function reset() {
