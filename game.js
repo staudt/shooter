@@ -1,9 +1,17 @@
 window.onload = function() {
+    
+    WebFontConfig = {
+        active: function() { game.time.events.add(10, createText, this); },
+        google: {
+            families: ['Fontdiner Swanky']
+        }
+    };
+
     var player;
     var map;
     var layer;
     var buttons;
-    var door;
+    var doors = [];
     var monsters;
     var gameLevel = 0;
     var remainingMonsters;
@@ -11,7 +19,7 @@ window.onload = function() {
     var scoreText;
     var gameOverText;
     var LevelText;
-    var monstersText;
+    var door_locations = [ [270,158], [252,1025], [1875,986], [1683,197], [1080,765], [966,668], [1020,976] ];
 
     var game = new Phaser.Game('100', '100', Phaser.CANVAS, 'phaser-example', { 
         preload: function() {
@@ -23,8 +31,9 @@ window.onload = function() {
             game.load.spritesheet('frank', 'assets/sprites/monster_frank.png', 39, 48);
             game.load.spritesheet('bomb', 'assets/sprites/monster_bomb.png', 36, 48);
 
-            game.load.tilemap('map', 'assets/mapa.csv', null, Phaser.Tilemap.CSV);
+            game.load.tilemap('map', 'assets/map1.csv', null, Phaser.Tilemap.CSV);
             game.load.image('tiles', 'assets/tiles.png');
+            game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
         },
 
 
@@ -37,8 +46,7 @@ window.onload = function() {
             map.setCollisionBetween(0, 11);
             map.setCollisionBetween(16, 24);
 
-            door = this.add.sprite(200, 200, 'door');
-            door.anchor.set(0.5);
+            create_door();
             monsters = game.add.group();
             
             player = this.add.sprite(600, 360, 'player');
@@ -83,22 +91,16 @@ window.onload = function() {
             gameOverText.setTextBounds(0, 0, 0, 0);
             gameOverText.fixedToCamera = true;
             gameOverText.visible = false;
-
-            scoreText = game.add.text(game.camera.x + (game.width/2), 40, "Score: 0", { font: "bold 24px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
-            scoreText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
-            scoreText.setTextBounds(0, 0, 0, 0);
-            scoreText.fixedToCamera = true;
-
-            monstersText = game.add.text(60, 80, "Monsters: 0", { font: "bold 24px Arial", fill: "#fff", boundsAlignV: "middle" });
-            monstersText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
-            monstersText.setTextBounds(0, 0, 0, 0);
-            monstersText.fixedToCamera = true;
-
             levelText = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "Level 1", { font: "bold 60px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
             levelText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
             levelText.setTextBounds(0, 0, 0, 0);
             levelText.fixedToCamera = true;
             levelText.visible = false;
+            scoreText = game.add.text(110, 120, "Score: 0\nNível: 0", { font: "bold 24px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" });
+            scoreText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
+            scoreText.setTextBounds(0, 0, 0, 0);
+            scoreText.fixedToCamera = true;
+
             player.bringToTop();
             nextLevel();
         },
@@ -119,7 +121,7 @@ window.onload = function() {
                 player.score += 10;
             });
             game.physics.arcade.collide(monsters, layer, function(monster, layer) {
-                monster.reel = 30;
+                monster.reel = 35;
                 game.physics.arcade.moveToXY(monster, game.rnd.integerInRange(0, game.world.width), game.rnd.integerInRange(0, game.world.height), monster.speed);
             });
             game.physics.arcade.collide(player, monsters, function(player, monster) {
@@ -157,7 +159,7 @@ window.onload = function() {
                 player.weapon.fire();
             }
             player.animations.play((player.body.velocity.x != 0 || player.body.velocity.y != 0 ? 'walk_' : 'idle_') +getDirection(player.weapon.fireAngle), 8, true);
-
+            //console.log(player.x + ' - ' + player.y); 
             monsters.forEach(function(monster) {
                 if (monster.hp <= 0) {
                     monster.kill();
@@ -167,7 +169,7 @@ window.onload = function() {
                         player.score += 20;
                     } else if (monster.type == 'bomb')  {
                         player.score += 30;
-                        game.camera.shake(0.08, 400);
+                        game.camera.shake(0.05, 400);
                     } else {
                         player.score += 40;
                     }
@@ -190,17 +192,26 @@ window.onload = function() {
                 }
                 monster.animations.play('walk_'+getDirection(angle), 5, true);
             })
-            scoreText.setText('Score: ' + player.score);
-            monstersText.setText('Monsters: ' + remainingMonsters);
+            scoreText.setText('Score: ' + player.score + '\nLevel: ' + gameLevel + '\nHorde: ' + remainingMonsters);
         },
         render: function() {
             //game.debug.cameraInfo(game.camera, 32, 32);
         }
     });
 
+    function create_door() {
+        if (doors.length >= door_locations.length)
+            return;
+        var door = game.add.sprite(door_locations[doors.length][0], door_locations[doors.length][1], 'door');
+        door.anchor.set(0.5);
+        doors.push(door);
+    }
 
     function nextLevel() {
         gameLevel += 1;
+        if (gameLevel > 2 && gameLevel % 2 == 0) {
+            create_door();
+        }
         player.hp += 15;
         if (player.hp > 100)
             player.hp = 100;
@@ -213,6 +224,7 @@ window.onload = function() {
 
     function generate_monster() {
         roll = game.rnd.integerInRange(1,10);
+        var door = doors[game.rnd.integerInRange(0,doors.length-1)];
         if (roll < 5) {
             var monster = game.add.sprite(door.x, door.y, 'frank');
             monster.animations.add('walk_down', [1,2]);
@@ -245,7 +257,7 @@ window.onload = function() {
             monster.animations.add('walk_left', [7,9]);
             monster.animations.add('walk_right', [6,8]);
             monster.hp = 5;
-            monster.speed = 250;
+            monster.speed = 300;
             monster.type = 'bomb';            
         }
         monster.reel = 0;
@@ -284,6 +296,25 @@ window.onload = function() {
             return 'down';
         }
         return 'left';
+    }
+
+    function createText() {
+        text = game.add.text(game.camera.x + (game.width/2), game.camera.y + (game.height/2), "AH NÃO!\nMAIS MONSTROS?");
+        text.anchor.setTo(0.5);
+        text.font = 'Fontdiner Swanky';
+        text.fontSize = 60;
+        text.padding.set(10, 16);
+        text.fixedToCamera = true;
+
+        grd = text.context.createLinearGradient(0, 0, 0, text.canvas.height);
+        grd.addColorStop(0, '#004CB3');   
+        grd.addColorStop(1, '#8ED6FF');
+        text.fill = grd;
+
+        text.align = 'center';
+        text.stroke = '#000000';
+        text.strokeThickness = 2;
+        text.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5);
     }
 
 };
